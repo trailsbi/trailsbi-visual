@@ -1,0 +1,9 @@
+TrailsBI visual for Power BI
+Copyright 2026 TrailsBI
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+src/generated/page.ts is generated from Trails for Power BI (https://github.com/trailsbi/trailsbi),
+Copyright 2026 TrailsBI, also licensed under the Apache License, Version 2.0.
+
+Power BI is a trademark of Microsoft. TrailsBI is not affiliated with or endorsed by Microsoft.

@@ -1,0 +1,93 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Part",
+            "name": "part",
+            "kind": "Grouping",
+            "description": "The Part column of the TrailsBI table (chunk order). Set to Don't summarize."
+        },
+        {
+            "displayName": "Chunk",
+            "name": "chunk",
+            "kind": "Grouping",
+            "description": "The Chunk column of the TrailsBI table (the analysis, as text)."
+        }
+    ],
+    "objects": {
+        "pages": {
+            "displayName": "Pages",
+            "properties": {
+                "lineage": {
+                    "displayName": "Lineage",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "model": {
+                    "displayName": "Model",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "reports": {
+                    "displayName": "Reports",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "health": {
+                    "displayName": "Health",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "ai": {
+                    "displayName": "AI Readiness",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        }
+    },
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "part": {
+                        "max": 1
+                    },
+                    "chunk": {
+                        "max": 1
+                    }
+                }
+            ],
+            "table": {
+                "rows": {
+                    "select": [
+                        {
+                            "for": {
+                                "in": "part"
+                            }
+                        },
+                        {
+                            "for": {
+                                "in": "chunk"
+                            }
+                        }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": {
+                            "count": 30000
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "supportsKeyboardFocus": true,
+    "suppressDefaultTitle": true,
+    "privileges": [],
+    "supportsLandingPage": true,
+    "supportsEmptyDataView": true
+}

@@ -1,0 +1,29 @@
+// The TrailsBI page brings its own styles (PAGE_CSS); this only sizes the visual
+// and styles the message shown before the fields are added.
+// The TrailsBI page lays itself out on <body>: a full-height flex column whose panes
+// (lineage canvas, details panel, Reports, Health, AI Readiness) scroll on their own.
+// In the visual the page lives in this element instead, so it takes the same layout;
+// without it the panes grow to their full content height and nothing can scroll.
+.trailsbi-root {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.trailsbi-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    padding: 24px;
+    text-align: center;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #5c6a78;
+    strong { color: #13203b; font-size: 15px; }
+    p { margin: 0; max-width: 420px; font-size: 13px; line-height: 1.5; }
+}
