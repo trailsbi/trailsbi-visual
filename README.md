@@ -19,7 +19,7 @@ from the `trailsbi` package into `src/generated/page.ts`.
 
 ## Install and use
 
-You need [trailsbi](https://github.com/trailsbi/trailsbi) 1.1.0 or later (`pip install -U trailsbi`).
+You need [trailsbi](https://github.com/trailsbi/trailsbi) 1.1.2 or later (`pip install -U trailsbi`).
 
 1. Download `TrailsBI.pbiviz` from the
    [latest release](https://github.com/trailsbi/trailsbi-visual/releases/latest).

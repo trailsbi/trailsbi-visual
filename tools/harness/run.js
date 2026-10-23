@@ -202,6 +202,20 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
     check("turning pages back on brings the page back", (await railShown()).length === 5 && !(await frame().$eval(".rail", r => r.hidden)));
   }
 
+  // Power BI trims trailing spaces when it loads text. Data cut right after a space inside an
+  // item's id (as trailsbi before 1.1.1 could) loses that space: the visual must say so.
+  {
+    const json = a.map(r => r[1]).join("");
+    const m = /"id": "[^"]*? /.exec(json);
+    if (!m) check("trimmed data is explained", false, "no id with a space in data A");
+    else {
+      const cut = m.index + m[0].length;
+      await update([[1, json.slice(0, cut).replace(/\s+$/, "")], [2, json.slice(cut)]]);
+      check("data trimmed by Power BI is explained, not crashed on",
+        /changed while Power BI loaded it/.test(await frame().innerText("body")));
+    }
+  }
+
   out = await update(a.filter(r => r[0] !== 2));
   check("a missing chunk is reported, not crashed on", /Chunk 2 of the TrailsBI data is missing/.test(await frame().innerText("body")));
 

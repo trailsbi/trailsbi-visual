@@ -176,6 +176,16 @@ export class Visual implements IVisual {
     /** Puts the TrailsBI page into the visual and starts its script. */
     private mount(json: string): void {
         const data = JSON.parse(json);
+        const broken = brokenLinks(data);
+        if (broken) {
+            // Power BI trims trailing spaces when it loads text; trailsbi before 1.1.1 could cut
+            // the data next to a space, and the name on one side of the cut lost it.
+            this.showMessage(
+                "The TrailsBI table was changed while Power BI loaded it (" + broken + " links point to items " +
+                "that are missing). Update trailsbi (pip install -U trailsbi), run trailsbi --embed again " +
+                "and refresh.");
+            return;
+        }
         const title = escapeHtml(String(data?.meta?.name || "TrailsBI"));
         this.teardown();
         // PAGE_BODY is the TrailsBI page's own markup, from the trailsbi package at build time;
@@ -243,6 +253,12 @@ export class Visual implements IVisual {
         box.append(strong, p);
         this.root.appendChild(box);
     }
+}
+
+/** How many dependencies point at an item the data does not have (0 when the data is whole). */
+export function brokenLinks(data: { nodes?: { id: string }[]; edges?: string[][] }): number {
+    const ids = new Set((data?.nodes || []).map(n => n.id));
+    return (data?.edges || []).filter(e => !ids.has(e[0]) || !ids.has(e[1])).length;
 }
 
 function jsonScript(id: string, json: string): HTMLScriptElement {
