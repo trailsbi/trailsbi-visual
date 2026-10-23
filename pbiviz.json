@@ -4,7 +4,7 @@
         "displayName": "TrailsBI",
         "guid": "trailsbiE7A4C19D",
         "visualClassName": "Visual",
-        "version": "0.9.1.0",
+        "version": "0.9.2.0",
         "description": "Shows the TrailsBI report (lineage, model, reports, health and AI readiness) inside Power BI. Reads the hidden TrailsBI table that `trailsbi --embed` writes into the model. Runs entirely inside Power BI and makes no network calls. Support: contact@trailsbi.com",
         "supportUrl": "https://trailsbi.com/support/",
         "gitHubUrl": "https://github.com/trailsbi/trailsbi-visual"
@@ -22,5 +22,5 @@
     "capabilities": "capabilities.json",
     "dependencies": null,
     "stringResources": [],
-    "version": "0.9.1.0"
+    "version": "0.9.2.0"
 }
