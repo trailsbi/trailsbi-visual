@@ -2,6 +2,11 @@
 
 All notable changes to the TrailsBI visual for Power BI.
 
+## 1.0.0 - 2026-10-25
+
+- First release for AppSource.
+- README: `trailsbi --embed` (trailsbi 1.2 or later) adds the TrailsBI page with this visual, so there is nothing to import.
+
 ## 0.9.2 - 2026-10-23
 
 - Sharper DAX and M code. Power BI scales the report page to fit the window, and the browser drew

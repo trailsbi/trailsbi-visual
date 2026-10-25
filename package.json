@@ -1,7 +1,7 @@
 {
   "name": "trailsbi-visual",
   "description": "TrailsBI inside Power BI: a custom visual that shows the TrailsBI report for the current report.",
-  "version": "0.9.2",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/trailsbi/trailsbi-visual"

@@ -3,45 +3,52 @@
 The [TrailsBI](https://trailsbi.com) report (lineage, model, reports, health and AI
 readiness) inside a Power BI report, as a custom visual.
 
-**Status: preview (0.9).** Works in Power BI Desktop and the Power BI service. Not yet on
-AppSource; install it from a file (below).
+**Version 1.0.** Works in Power BI Desktop and the Power BI service. AppSource listing in
+progress; until then `trailsbi --embed` brings it into your report (below).
 
 ## How it works
 
 1. `trailsbi --embed` analyses the PBIP project and writes the result into its semantic model
    as a hidden table, **TrailsBI**, with two columns: `Part` (1, 2, 3 ...) and `Chunk` (up to
    30,000 characters of the analysis each, under Power BI's text limits).
-2. This visual reads the table, joins the chunks in `Part` order and runs the same page the
-   HTML report uses. Nothing is fetched: the visual makes no network calls.
+2. It also adds a **TrailsBI** page to the report, hidden in view mode, with this visual on it
+   and bound to the table. The visual is saved inside the report, the way Power BI Desktop
+   saves a visual imported from a file.
+3. The visual reads the table, joins the chunks in `Part` order and runs the same page the HTML
+   report uses. Nothing is fetched: the visual makes no network calls.
 
 The page is not kept here twice: `tools/import_page.py` copies its markup, styles and script
-from the `trailsbi` package into `src/generated/page.ts`.
+from the `trailsbi` package into `src/generated/page.ts`. Each trailsbi release bundles a
+release of this visual.
 
 ## Install and use
 
-You need [trailsbi](https://github.com/trailsbi/trailsbi) 1.1.2 or later (`pip install -U trailsbi`).
+You need [trailsbi](https://github.com/trailsbi/trailsbi) 1.2 or later (`pip install -U trailsbi`).
 
-1. Download `TrailsBI.pbiviz` from the
-   [latest release](https://github.com/trailsbi/trailsbi-visual/releases/latest).
-2. Close the project in Power BI Desktop, then write the TrailsBI table into its model:
+1. Close the project in Power BI Desktop, then run:
    `trailsbi "D:\Reports\Sales" --embed`
-3. Open the project in Power BI Desktop and refresh (**Home > Refresh**) so the table loads.
-4. In the Visualizations pane: **...** (Get more visuals), **Import a visual from a file**, and
-   pick `TrailsBI.pbiviz`.
-5. Add a page and the TrailsBI visual, and stretch it over the page. The table is hidden: in
-   the Data pane, right-click and turn on **View hidden**, then drag **TrailsBI > Part** and
-   **TrailsBI > Chunk** onto the visual.
-6. Optional: **Format visual > Pages** has a switch for each page (Lineage, Model, Reports,
+2. Open the project in Power BI Desktop, refresh (**Home > Refresh**) so the table loads, and go
+   to the **TrailsBI** page.
+3. Optional: **Format visual > Pages** has a switch for each page (Lineage, Model, Reports,
    Health, AI Readiness). All are on by default. A page that is off leaves the side rail, and
    links that lead to it say it is turned off. With one page left the rail is hidden.
 
-When the model or report changes, run `trailsbi --embed` again and refresh.
+When the model or report changes, run `trailsbi --embed` again and refresh. It keeps the
+TrailsBI page as you left it and updates the visual when trailsbi ships a newer one.
 
-In the Power BI service, a visual imported from a file needs the tenant setting *Allow visuals
-created using the Power BI SDK*, unless your admin adds it as an organizational visual.
+**Adding the visual by hand** (a report not saved in the PBIR format, or a page of your own):
+download `TrailsBI.pbiviz` from the
+[latest release](https://github.com/trailsbi/trailsbi-visual/releases/latest), and in the
+Visualizations pane choose **...** (Get more visuals), **Import a visual from a file**. Add it to
+a page, then in the Data pane right-click, turn on **View hidden**, and drag **TrailsBI > Part**
+and **TrailsBI > Chunk** onto the visual.
 
-The TrailsBI table holds the model's names, DAX and data source addresses, so anyone who can
-open the report can read them in the visual. Embed it only where that is allowed.
+In the Power BI service, a visual that is not from AppSource needs the tenant setting *Allow
+visuals created using the Power BI SDK*, unless your admin adds it as an organizational visual.
+
+The TrailsBI page is hidden from report readers, but the TrailsBI table holds the model's names,
+DAX and data source addresses, and anyone who can edit or build on the report can read them.
+Embed it only where that is allowed.
 
 ## Inside Power BI's sandbox
 
