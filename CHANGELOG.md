@@ -2,6 +2,12 @@
 
 All notable changes to the TrailsBI visual for Power BI.
 
+## 1.0.1 - 2026-11-04
+
+- One field: the visual now takes only the TrailsBI table's **Chunk** column. Needs trailsbi 1.2.2 or later; for a table written by an older trailsbi, the visual says to update it and run `trailsbi --embed` again.
+- Right-click anywhere in the visual opens Power BI's context menu.
+- Every DAX and M code block has a copy button at its top right when the pointer is over it. Where Power BI blocks the clipboard, the button selects the code so Ctrl+C copies it.
+
 ## 1.0.0 - 2026-10-25
 
 - First release for AppSource.

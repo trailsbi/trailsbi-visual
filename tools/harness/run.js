@@ -15,7 +15,7 @@ const sizeAt = args.indexOf("--size");
 const [W, H] = (sizeAt >= 0 ? args.splice(sizeAt, 2)[1] : "1400x860").split("x").map(Number);
 if (shots) fs.mkdirSync(shots, { recursive: true });
 
-function readCsv(file) {            // the two-column CSV that tools/to_table.py writes
+function readCsv(file) {            // the one-column CSV ("000001|...") that tools/to_table.py writes
   const text = fs.readFileSync(file, "utf8").replace(/^﻿/, "");
   const rows = []; let row = [], cell = "", q = false;
   for (let i = 0; i < text.length; i++) {
@@ -27,8 +27,10 @@ function readCsv(file) {            // the two-column CSV that tools/to_table.py
     else cell += c;
   }
   if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows.slice(1).filter(r => r.length === 2).map(r => [Number(r[0]), r[1]]);
+  return rows.slice(1).filter(r => r.length === 1 && r[0]).map(r => r[0]);
 }
+const pieceData = c => c.replace(/^\d{6}\|/, "");
+const piece = (k, data) => String(k).padStart(6, "0") + "|" + data;
 
 const js = fs.readFileSync(path.join(ROOT, ".tmp/drop/visual.js"), "utf8");
 const css = fs.readFileSync(path.join(ROOT, ".tmp/drop/visual.css"), "utf8");
@@ -45,12 +47,13 @@ const el = document.createElement("div"); document.body.appendChild(el);
 const host = {
   eventService: { renderingStarted() {}, renderingFinished() { send({ kind: "rendered" }); }, renderingFailed(o, r) { send({ kind: "failed", reason: r }); } },
   launchUrl(u) { send({ kind: "launch", url: u }); },
+  createSelectionManager() { return { showContextMenu(id, pos) { send({ kind: "contextmenu", x: pos.x, y: pos.y }); return Promise.resolve(); } }; },
 };
 window.addEventListener("message", e => {
   const m = e.data;
   if (m.cmd === "update") {
     if (!visual) visual = window.powerbi.visuals.plugins["${guid}"].create({ element: el, host });
-    const dataView = m.rows ? { metadata: { objects: m.objects || {} }, table: { columns: [{ roles: { part: true } }, { roles: { chunk: true } }], rows: m.rows } } : undefined;
+    const dataView = m.rows ? { metadata: { objects: m.objects || {} }, table: { columns: [{ roles: { chunk: true } }], rows: m.rows.map(c => [c]) } } : undefined;
     visual.update({ dataViews: dataView ? [dataView] : [], viewport: { width: innerWidth, height: innerHeight }, type: 2 });
     const card = visual.getFormattingModel().cards[0];
     const slices = card ? card.groups[0].slices.map(s => [s.displayName, s.control.properties.value]) : [];
@@ -85,7 +88,7 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
 
   await waitFor("ready");
   let out = await update(null);
-  check("no fields: shows how to set it up", /Part and Chunk/.test(await frame().innerText("body")));
+  check("no fields: shows how to set it up", /Chunk column/.test(await frame().innerText("body")));
   await shot("0-empty");
 
   const a = readCsv(args[0]);
@@ -205,19 +208,67 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
   // Power BI trims trailing spaces when it loads text. Data cut right after a space inside an
   // item's id (as trailsbi before 1.1.1 could) loses that space: the visual must say so.
   {
-    const json = a.map(r => r[1]).join("");
+    const json = a.map(pieceData).join("");
     const m = /"id": "[^"]*? /.exec(json);
     if (!m) check("trimmed data is explained", false, "no id with a space in data A");
     else {
       const cut = m.index + m[0].length;
-      await update([[1, json.slice(0, cut).replace(/\s+$/, "")], [2, json.slice(cut)]]);
+      await update([piece(1, json.slice(0, cut).replace(/\s+$/, "")), piece(2, json.slice(cut))]);
       check("data trimmed by Power BI is explained, not crashed on",
         /changed while Power BI loaded it/.test(await frame().innerText("body")));
     }
   }
 
-  out = await update(a.filter(r => r[0] !== 2));
-  check("a missing chunk is reported, not crashed on", /Chunk 2 of the TrailsBI data is missing/.test(await frame().innerText("body")));
+  out = await update(a.filter(c => !c.startsWith("000002|")));
+  check("a missing chunk is reported, not crashed on", /Part 2 of the TrailsBI data is missing/.test(await frame().innerText("body")));
+
+  out = await update(a.map(pieceData));
+  check("a table from an older trailsbi says to update and embed again", /older trailsbi/.test(await frame().innerText("body")));
+
+  // Power BI does not promise row order: shuffled chunks still make the same page.
+  out = await update(a.slice().reverse());
+  check("chunks in any order make the page", (await frame().textContent("header h1")).trim() === titleA);
+
+  // Right-click anywhere opens Power BI's context menu, at the pointer.
+  {
+    const iframeBox = await page.$eval("#v", f => { const r = f.getBoundingClientRect(); return { x: r.x, y: r.y }; });
+    const n = events.length;
+    await page.mouse.click(iframeBox.x + 400, iframeBox.y + 300, { button: "right" });
+    await page.waitForTimeout(300);
+    const menu = events.slice(n).find(e => e.kind === "contextmenu");
+    check("right-click opens Power BI's context menu at the pointer", !!menu && menu.x === 400 && menu.y === 300, menu ? `${menu.x},${menu.y}` : "none");
+  }
+
+  // Code blocks get a copy button on hover.
+  {
+    const f = frame();
+    await f.click('button[data-tab="model"]'); await page.waitForTimeout(400);
+    await f.click('button:has-text("Details")').catch(() => {}); await page.waitForTimeout(300);
+    await f.evaluate(() => {
+      const calc = [...document.querySelectorAll("#tab-model .mrow")].find(r => r.offsetParent && r.querySelector(".mcodebtn"));
+      if (calc) calc.querySelector(".mcodebtn").click();
+    });
+    await page.waitForTimeout(400);
+    const pre = await f.$("#tab-model pre.mcode:not([hidden])");
+    if (!pre) check("a code block to copy from", false, "no DAX block opened");
+    else {
+      await pre.hover(); await page.waitForTimeout(300);
+      const btn = await f.$(".codecopy:not([hidden])");
+      const pr = await pre.boundingBox(), br = btn ? await btn.boundingBox() : null;
+      check("hovering code shows a copy button at its top right", !!br && br.x > pr.x + pr.width - 60 && br.y < pr.y + 20);
+      await shot("5-copy-hover");
+      if (btn) {
+        await btn.click(); await page.waitForTimeout(500);
+        const state = await f.$eval(".codecopy", b => b.title);
+        const text = await f.innerText("body");
+        const selected = await f.evaluate(() => String(window.getSelection()).length);
+        check("copy button copies, or selects the code and says Ctrl+C", state === "Copied" || (/press Ctrl\+C/.test(text) && selected > 10), state);
+        await shot("5-copy-done");
+      }
+      await f.hover("header h1"); await page.waitForTimeout(400);
+      check("the copy button goes when the pointer leaves the code", (await f.$(".codecopy:not([hidden])")) === null);
+    }
+  }
 
   const errors = events.filter(e => e.kind === "console" || e.kind === "failed");
   check("no errors in the console", errors.length === 0, errors.map(e => e.text || e.reason).slice(0, 3).join(" | "));

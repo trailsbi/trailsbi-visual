@@ -2,9 +2,10 @@
  * TrailsBI visual: shows the TrailsBI report (lineage, model, reports, health,
  * AI readiness) inside a Power BI report.
  *
- * The analysis is not done here. `trailsbi` writes it into the semantic model as a
- * small table of text chunks (Part, Chunk); this visual joins the chunks back into the
- * page data and runs the same page script the HTML report uses (src/generated/page.ts).
+ * The analysis is not done here. `trailsbi --embed` writes it into the semantic model as
+ * a small table with one text column, Chunk, whose values are numbered pieces of the page
+ * data ("000001|...", "000002|..."). This visual puts the pieces back in order, joins them
+ * and runs the same page script the HTML report uses (src/generated/page.ts).
  */
 "use strict";
 
@@ -16,6 +17,7 @@ import { PAGE_BODY, PAGE_CSS, PAGE_ICONS, TRAILSBI_VERSION, runPage } from "./ge
 import DataView = powerbi.DataView;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
@@ -37,26 +39,35 @@ export function readPages(dataView: DataView | undefined): Set<string> {
     return new Set(PAGES.filter(p => saved[p.prop] !== false).map(p => p.view));
 }
 
-/** Joins the Part/Chunk rows into the page data, in Part order. */
+/** A Chunk value: a six-digit part number, "|", then that part of the page data. */
+const PIECE = /^(\d{6})\|/;
+
+/** Puts the Chunk values back in part order and joins them into the page data. */
 export function joinChunks(dataView: DataView | undefined): { json: string } | { problem: string } {
     const table = dataView?.table;
     if (!table || !table.rows || !table.columns.length) {
-        return { problem: "Add the TrailsBI table's Part and Chunk columns to this visual." };
+        return { problem: "Add the TrailsBI table's Chunk column to this visual." };
     }
-    const partCol = table.columns.findIndex(c => c.roles?.["part"]);
     const chunkCol = table.columns.findIndex(c => c.roles?.["chunk"]);
-    if (partCol < 0 || chunkCol < 0) {
-        return { problem: "This visual needs both fields: Part and Chunk." };
+    if (chunkCol < 0) {
+        return { problem: "Add the TrailsBI table's Chunk column to this visual." };
     }
-    const rows = table.rows
-        .map(r => ({ part: Number(r[partCol]), chunk: r[chunkCol] == null ? "" : String(r[chunkCol]) }))
-        .sort((a, b) => a.part - b.part);
+    const rows: { part: number; data: string }[] = [];
+    for (const r of table.rows) {
+        const value = r[chunkCol] == null ? "" : String(r[chunkCol]);
+        const m = PIECE.exec(value);
+        if (!m) {
+            return { problem: "This TrailsBI table was written by an older trailsbi. Update it (pip install -U trailsbi), run trailsbi --embed again and refresh." };
+        }
+        rows.push({ part: Number(m[1]), data: value.slice(m[0].length) });
+    }
+    rows.sort((a, b) => a.part - b.part);
     for (let i = 0; i < rows.length; i++) {
         if (rows[i].part !== i + 1) {
-            return { problem: `Chunk ${i + 1} of the TrailsBI data is missing. Set Part and Chunk to "Don't summarize" and remove any filters on this visual.` };
+            return { problem: `Part ${i + 1} of the TrailsBI data is missing. Remove any filters on this visual and refresh the TrailsBI table.` };
         }
     }
-    return { json: rows.map(r => r.chunk).join("") };
+    return { json: rows.map(r => r.data).join("") };
 }
 
 function escapeHtml(text: string): string {
@@ -66,6 +77,7 @@ function escapeHtml(text: string): string {
 export class Visual implements IVisual {
     private readonly host: IVisualHost;
     private readonly root: HTMLElement;
+    private readonly selection: ISelectionManager;
     private listeners: Listener[] = [];
     private ownBodyNodes = new Set<Node>();
     private shownKey = "";
@@ -76,6 +88,7 @@ export class Visual implements IVisual {
         this.host = options.host;
         this.root = options.element;
         this.root.classList.add("trailsbi-root");
+        this.selection = this.host.createSelectionManager();
 
         const style = document.createElement("style");
         style.textContent = PAGE_CSS;
@@ -91,6 +104,12 @@ export class Visual implements IVisual {
                 this.host.launchUrl(href);
             }
         }, true);
+
+        // Right-click anywhere in the visual opens Power BI's own context menu.
+        this.root.addEventListener("contextmenu", (e: MouseEvent) => {
+            e.preventDefault();
+            this.selection.showContextMenu({}, { x: e.clientX, y: e.clientY });
+        });
     }
 
     public update(options: VisualUpdateOptions): void {

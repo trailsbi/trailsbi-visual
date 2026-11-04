@@ -1,16 +1,10 @@
 {
     "dataRoles": [
         {
-            "displayName": "Part",
-            "name": "part",
-            "kind": "Grouping",
-            "description": "The Part column of the TrailsBI table (chunk order). Set to Don't summarize."
-        },
-        {
             "displayName": "Chunk",
             "name": "chunk",
             "kind": "Grouping",
-            "description": "The Chunk column of the TrailsBI table (the analysis, as text)."
+            "description": "The Chunk column of the hidden TrailsBI table that trailsbi --embed writes."
         }
     ],
     "objects": {
@@ -54,9 +48,6 @@
         {
             "conditions": [
                 {
-                    "part": {
-                        "max": 1
-                    },
                     "chunk": {
                         "max": 1
                     }
@@ -65,11 +56,6 @@
             "table": {
                 "rows": {
                     "select": [
-                        {
-                            "for": {
-                                "in": "part"
-                            }
-                        },
                         {
                             "for": {
                                 "in": "chunk"
