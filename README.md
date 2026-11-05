@@ -6,6 +6,8 @@ readiness) inside a Power BI report, as a custom visual.
 **Version 1.0.1.** Works in Power BI Desktop and the Power BI service. AppSource listing in
 progress; until then `trailsbi --embed` brings it into your report (below).
 
+See it in the [demo video](https://www.youtube.com/watch?v=HQTlUTrLqag).
+
 ## How it works
 
 1. `trailsbi --embed` analyses the PBIP project and writes the result into its semantic model
