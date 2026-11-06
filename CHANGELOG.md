@@ -2,6 +2,16 @@
 
 All notable changes to the TrailsBI visual for Power BI.
 
+## 1.1.0 - 2026-11-07
+
+- The page from trailsbi 1.3.0
+  - calculation groups as their own kind of object
+  - help for DAX and Power Query functions when you point at them in code
+  - a dark theme that follows the system setting, with a switch in the header
+  - a compact header and rail when the visual is narrow.
+- Certification groundwork:
+  - The whole visual, including the generated page script, now passes the Power BI custom visual lint.
+
 ## 1.0.1 - 2026-11-04
 
 - One field: the visual now takes only the TrailsBI table's **Chunk** column. Needs trailsbi 1.2.2 or later; for a table written by an older trailsbi, the visual says to update it and run `trailsbi --embed` again.

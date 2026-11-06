@@ -58,6 +58,8 @@ Embed it only where that is allowed.
 | Data | In the page | In the TrailsBI table, as of the last `--embed` |
 | Right-click | The browser's menu | Power BI's menu (Show as a table, Spotlight and so on) |
 | Copying code | The copy button on any DAX or M block | The same button; if Power BI blocks the clipboard, the code is selected so Ctrl+C copies it |
+| Function help in code | Its Microsoft Learn link opens in a new tab | The link opens through Power BI |
+| Light and dark theme | Follows the system; the header switch is remembered | Follows the system; the switch lasts until the report is closed |
 
 ## Build
 
@@ -65,6 +67,7 @@ Embed it only where that is allowed.
 npm ci
 npm install -g powerbi-visuals-tools
 python tools/import_page.py --src ../trailsbi/src   # or omit --src to use pip's trailsbi
+npm audit
 npm run lint
 pbiviz package                                       # writes dist/*.pbiviz
 ```
@@ -76,7 +79,8 @@ A tag `v*` builds the visual and attaches `TrailsBI.pbiviz` to a GitHub release
 
 `tools/harness/run.js` loads the built visual into a sandboxed iframe like Power BI's, with a
 stand-in host, and checks rendering, every page, scrolling, links, export, the page switches,
-refresh with new data and a missing chunk. It takes the table as CSV;
+refresh with new data, a missing chunk, function help, the theme switch, calculation groups, a
+narrow visual and a project name with markup in it. It takes the table as CSV;
 `tools/to_table.py` makes one from a TrailsBI HTML report:
 
 ```

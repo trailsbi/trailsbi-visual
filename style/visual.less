@@ -23,8 +23,8 @@
     padding: 24px;
     text-align: center;
     font-family: "Segoe UI", system-ui, sans-serif;
-    color: #5c6a78;
-    strong { color: #13203b; font-size: 15px; }
+    color: var(--muted, #5c6a78);
+    strong { color: var(--ink, #13203b); font-size: 15px; }
     p { margin: 0; max-width: 420px; font-size: 13px; line-height: 1.5; }
 }
 
@@ -34,5 +34,5 @@
 }
 .trailsbi-root pre:not(.mcode) {
     background: transparent;
-    box-shadow: inset 0 0 0 100vmax #1d2733;
+    box-shadow: inset 0 0 0 100vmax #1d2733;   /* code stays dark in both themes */
 }

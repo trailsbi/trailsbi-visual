@@ -270,6 +270,81 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
     }
   }
 
+  // Function help: pointing at a function in code explains it, and its link goes through Power BI.
+  {
+    const f = frame();
+    const fn = await f.$("#tab-model pre.mcode:not([hidden]) span.fn");
+    if (!fn) check("a function in code to explain", false, "no function in the open code block");
+    else {
+      await fn.hover(); await page.waitForTimeout(300);
+      const tip = await f.$("#fnhelp:not([hidden])");
+      const name = await fn.textContent();
+      check("pointing at a function shows its help", !!tip && (await tip.innerText()).toUpperCase().includes(name.toUpperCase()), name);
+      await shot("6-function-help");
+      if (tip) {
+        const n = events.length;
+        await f.click("#fnhelp a"); await page.waitForTimeout(300);
+        const launch = events.slice(n).find(e => e.kind === "launch");
+        check("the help's link opens Microsoft Learn through host.launchUrl", !!launch && /^https:\/\/learn\.microsoft\.com\//.test(launch.url), launch ? launch.url : "none");
+      }
+      await f.hover("header h1"); await page.waitForTimeout(400);
+    }
+  }
+
+  // Theme switch: dark and back, without errors.
+  {
+    const f = frame();
+    const before = await f.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    await f.click("#themeBtn"); await page.waitForTimeout(300);
+    const theme = await f.evaluate(() => document.documentElement.getAttribute("data-theme"));
+    const after = await f.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    check("the theme switch changes the page's colours", !!theme && before !== after, `${theme}: ${before} -> ${after}`);
+    await shot("7-theme");
+    await f.click("#themeBtn"); await page.waitForTimeout(200);
+  }
+
+  // The project name is text: markup in it shows as written and makes no elements.
+  {
+    const data = JSON.parse(a.map(pieceData).join(""));
+    const name = '<img src=x onerror="parent.postMessage({kind:\'console\',text:\'xss\'},\'*\')"> & "quotes"';
+    data.meta.name = name;
+    await update([piece(1, JSON.stringify(data))]);
+    const f = frame();
+    const shown = (await f.textContent("header h1")).trim();
+    check("a project name with markup shows as text", shown === name && (await f.$("img")) === null, shown.slice(0, 40));
+    await update(a);
+  }
+
+  // Calculation groups have their own cards (when the second data set has some).
+  if (args[1]) {
+    const b = readCsv(args[1]);
+    if (b.join("").includes('"calcgroup"')) {
+      await update(b);
+      const f = frame();
+      await f.click('button[data-tab="graph"]'); await page.waitForTimeout(300);
+      const groups = await f.$$eval("#svg g.n.t-calcgroup", gs => gs.length);
+      const items = await f.$$eval("#svg g.n.t-calcitem", gs => gs.length);
+      check("calculation groups and their items have their own cards", groups > 0 && items > 0, `${groups} groups, ${items} items`);
+      await update(a);
+    }
+  }
+
+  // A narrow visual: compact header and rail, nothing wider than the visual.
+  {
+    await page.evaluate(() => { document.getElementById("v").style.width = "480px"; });
+    await page.waitForTimeout(600);
+    const f = frame();
+    const m = await f.evaluate(() => ({
+      over: document.documentElement.scrollWidth - innerWidth,
+      rail: document.querySelector(".rail").getBoundingClientRect().width,
+      title: getComputedStyle(document.querySelector("header h1")).display,
+    }));
+    check("a narrow visual gets the compact header and rail", m.over <= 0 && m.rail < 60 && m.title === "none", JSON.stringify(m));
+    await shot("8-narrow");
+    await page.evaluate(w => { document.getElementById("v").style.width = w + "px"; }, W);
+    await page.waitForTimeout(300);
+  }
+
   const errors = events.filter(e => e.kind === "console" || e.kind === "failed");
   check("no errors in the console", errors.length === 0, errors.map(e => e.text || e.reason).slice(0, 3).join(" | "));
   await browser.close();

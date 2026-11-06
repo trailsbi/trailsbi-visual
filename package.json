@@ -1,7 +1,7 @@
 {
   "name": "trailsbi-visual",
   "description": "TrailsBI inside Power BI: a custom visual that shows the TrailsBI report for the current report.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/trailsbi/trailsbi-visual"
@@ -24,5 +24,13 @@
     "typescript": "5.5.4"
   },
   "private": true,
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    },
+    "sockjs": {
+      "uuid": "^11.1.1"
+    }
+  }
 }

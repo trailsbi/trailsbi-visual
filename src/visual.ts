@@ -70,8 +70,20 @@ export function joinChunks(dataView: DataView | undefined): { json: string } | {
     return { json: rows.map(r => r.data).join("") };
 }
 
-function escapeHtml(text: string): string {
-    return text.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+/** An element of the TrailsBI page: [tag, {attributes}, [children]], or text. */
+type PageNode = string | [string, Record<string, string>, PageNode[]];
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Builds the page's markup from its element tree (made by tools/import_page.py), so
+ *  nothing is parsed as HTML. The project name goes in as text and attribute values only. */
+export function buildPage(node: PageNode, title: string, inSvg = false): Node {
+    if (typeof node === "string") return document.createTextNode(node.split("__TITLE__").join(title));
+    const [tag, attrs, kids] = node;
+    const svg = inSvg || tag === "svg";
+    const el = svg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
+    for (const name of Object.keys(attrs)) el.setAttribute(name, attrs[name].split("__TITLE__").join(title));
+    for (const kid of kids) el.appendChild(buildPage(kid, title, svg));
+    return el;
 }
 
 export class Visual implements IVisual {
@@ -94,8 +106,9 @@ export class Visual implements IVisual {
         style.textContent = PAGE_CSS;
         document.head.appendChild(style);
 
-        // Links in the page open through Power BI, which asks the user first.
-        this.root.addEventListener("click", (e: MouseEvent) => {
+        // Links in the page open through Power BI, which asks the user first. Listening on the
+        // document also catches links in pop-ups the page adds to <body> (function help).
+        document.addEventListener("click", (e: MouseEvent) => {
             const a = (e.target as Element)?.closest?.("a[href]") as HTMLAnchorElement | null;
             if (!a || a.hasAttribute("download")) return;
             const href = a.getAttribute("href") || "";
@@ -205,13 +218,11 @@ export class Visual implements IVisual {
                 "and refresh.");
             return;
         }
-        const title = escapeHtml(String(data?.meta?.name || "TrailsBI"));
+        const title = String(data?.meta?.name || "TrailsBI");
         this.teardown();
-        // PAGE_BODY is the TrailsBI page's own markup, from the trailsbi package at build time;
-        // only the escaped project name is put into it.
-        const markup = PAGE_BODY.split("__TITLE__").join(title).split("__BOOT__").join("");
-        const parsed = new DOMParser().parseFromString(markup, "text/html");
-        this.root.append(...Array.from(parsed.body.childNodes).map(n => document.importNode(n, true)));
+        // PAGE_BODY is the TrailsBI page's own markup as an element tree, from the trailsbi
+        // package at build time; only the project name is put into it, as text.
+        for (const node of PAGE_BODY as PageNode[]) this.root.appendChild(buildPage(node, title));
         this.root.appendChild(jsonScript("icons", PAGE_ICONS));
         this.root.appendChild(jsonScript("data", json));
 

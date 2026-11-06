@@ -4,6 +4,7 @@ export default [
     powerbiVisualsConfigs.configs.recommended,
     {
         // tools/ holds Node and Python build helpers, not code that ships in the visual.
-        ignores: ["node_modules/**", "dist/**", ".vscode/**", ".tmp/**", "tools/**", "src/generated/**"],
+        // src/generated/page.ts (the TrailsBI page script) is linted like the rest.
+        ignores: ["node_modules/**", "dist/**", ".vscode/**", ".tmp/**", "tools/**"],
     },
 ];

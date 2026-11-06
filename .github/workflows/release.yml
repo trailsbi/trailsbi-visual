@@ -24,6 +24,7 @@ jobs:
           [ "v${want}" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} but pbiviz.json says ${want}"; exit 1; }
           grep -q "^## ${want}\b" CHANGELOG.md || { echo "No CHANGELOG.md section for ${want}"; exit 1; }
       - run: npm ci
+      - run: npm audit --audit-level=moderate
       - run: npx eslint .
       - run: npx pbiviz package
       - name: Name the file and add checksums
