@@ -2,6 +2,13 @@
 
 All notable changes to the TrailsBI visual for Power BI.
 
+## 1.2.0 - 2026-11-09
+
+- The page from trailsbi 1.4.0:
+  - **Graph view.** Lineage has a new **Map | Graph** switch. Graph shows the same items and links as a circular graph.
+  - Uses the map's type filters, view options, search and selection, and the details pane; an item selected in one view stays selected in the other.
+  - **Report measures.** A report connected live to a semantic model can add measures of its own. TrailsBI now shows them in the lineage as **report measures**, apart from the model's measures.
+
 ## 1.1.0 - 2026-11-07
 
 - The page from trailsbi 1.3.0

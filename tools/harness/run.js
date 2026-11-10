@@ -329,6 +329,31 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
     }
   }
 
+  // The graph view: the canvas draws, the wheel zooms, a click selects, and Local narrows it.
+  {
+    const f = frame();
+    await f.click('button[data-tab="graph"]'); await page.waitForTimeout(300);
+    await f.click("#lnGraph"); await page.waitForTimeout(2500);
+    const drawn = await f.evaluate(() => {
+      const c = document.getElementById("gcanvas"), x = c.getContext("2d");
+      const d = x.getImageData(0, 0, c.width, c.height).data; let ink = 0;
+      for (let i = 0; i < d.length; i += 16) if (Math.abs(d[i] - d[0]) + Math.abs(d[i + 1] - d[1]) + Math.abs(d[i + 2] - d[2]) > 60) ink++;
+      return { w: c.width, ink };
+    });
+    check("the graph view draws the lineage as a network", drawn.w > 100 && drawn.ink > 200, JSON.stringify(drawn));
+    const z0 = await f.textContent("#zLevel");
+    const box = await page.$eval("#v", v => { const r = v.getBoundingClientRect(); return { x: r.x, y: r.y }; });
+    await page.mouse.move(box.x + 600, box.y + 450); await page.mouse.wheel(0, -400); await page.waitForTimeout(400);
+    check("the wheel zooms the graph", (await f.textContent("#zLevel")) !== z0, z0 + " -> " + (await f.textContent("#zLevel")));
+    await f.fill("#q", "a"); await f.press("#q", "Enter"); await page.waitForTimeout(800);
+    await f.press("#q", "Escape");
+    await f.check("#gLocal"); await page.waitForTimeout(1200);
+    await shot("9-graph-local");
+    check("Local narrows the graph to the selected item", await f.$eval("#gLocalBox", b => !b.classList.contains("off")));
+    await f.uncheck("#gLocal");
+    await f.click("#lnMap"); await page.waitForTimeout(300);
+  }
+
   // A narrow visual: compact header and rail, nothing wider than the visual.
   {
     await page.evaluate(() => { document.getElementById("v").style.width = "480px"; });
