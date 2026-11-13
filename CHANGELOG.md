@@ -2,12 +2,22 @@
 
 All notable changes to the TrailsBI visual for Power BI.
 
+## 1.3.0 - 2026-11-12
+
+- The page from trailsbi 1.5.2:
+  - The visual shows one report, as before (`trailsbi --embed` works on one report at a time), so the new Workspace view and Scope menu stay hidden in it.
+  - Connection strings with quoted values (`Initial Catalog="Sales Model"`) are read correctly, so a live-connected report names its published semantic model properly.
+  - Smaller fixes and tidier code carried over from the page.
+
 ## 1.2.0 - 2026-11-09
 
 - The page from trailsbi 1.4.0:
-  - **Graph view.** Lineage has a new **Map | Graph** switch. Graph shows the same items and links as a circular graph.
-  - Uses the map's type filters, view options, search and selection, and the details pane; an item selected in one view stays selected in the other.
-  - **Report measures.** A report connected live to a semantic model can add measures of its own. TrailsBI now shows them in the lineage as **report measures**, apart from the model's measures.
+  - The new graph view: the lineage as one network, with a local mode around the selected item and
+    rings from the sources in the middle to pages and visuals outside, and Obsidian's Display settings.
+    Scroll to zoom, drag to move; names fade in as you zoom.
+    It keeps working in a narrow visual.
+  - Report measures (measures a live-connected report adds) show in the lineage apart from the
+    model's measures, with a "Keep measures in the model" Health check.
 
 ## 1.1.0 - 2026-11-07
 

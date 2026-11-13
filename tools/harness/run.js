@@ -354,6 +354,16 @@ const srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,bod
     await f.click("#lnMap"); await page.waitForTimeout(300);
   }
 
+  // One report: the workspace view and the Scope menu stay out of the way.
+  {
+    const f = frame();
+    const ws = await f.evaluate(() => ({
+      rail: document.querySelector('.rail button[data-tab="ws"]').hidden,
+      scope: document.getElementById("scopeBox").hidden,
+    }));
+    check("one report: no Workspace view or Scope menu", ws.rail && ws.scope, JSON.stringify(ws));
+  }
+
   // A narrow visual: compact header and rail, nothing wider than the visual.
   {
     await page.evaluate(() => { document.getElementById("v").style.width = "480px"; });

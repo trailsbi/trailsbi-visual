@@ -79,8 +79,8 @@ A tag `v*` builds the visual and attaches `TrailsBI.pbiviz` to a GitHub release
 
 `tools/harness/run.js` loads the built visual into a sandboxed iframe like Power BI's, with a
 stand-in host, and checks rendering, every page, scrolling, links, export, the page switches,
-refresh with new data, a missing chunk, function help, the theme switch, calculation groups, the graph view, a
-narrow visual and a project name with markup in it. It takes the table as CSV;
+refresh with new data, a missing chunk, function help, the theme switch, calculation groups, the graph view, no
+workspace view for one report, a narrow visual and a project name with markup in it. It takes the table as CSV;
 `tools/to_table.py` makes one from a TrailsBI HTML report:
 
 ```
